@@ -85,6 +85,13 @@ RCT_EXTERN_METHOD(startNotification:
                   characteristicUUID:(NSString*)characteristicUUID
                   callback:(nonnull RCTResponseSenderBlock)callback)
 
+RCT_EXTERN_METHOD(startNotificationUseBuffer:
+                  (NSString *)peripheralUUID
+                  serviceUUID:(NSString*)serviceUUID
+                  characteristicUUID:(NSString*)characteristicUUID
+                  buffer:(NSInteger)buffer
+                  callback:(nonnull RCTResponseSenderBlock)callback)
+
 RCT_EXTERN_METHOD(stopNotification:
                   (NSString *)peripheralUUID
                   serviceUUID:(NSString*)serviceUUID
