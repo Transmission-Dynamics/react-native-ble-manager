@@ -21,6 +21,7 @@ import CoreBluetooth
     private var writeQueue: Array<Any>
     private var notificationCallbacks: Dictionary<String, [RCTResponseSenderBlock]>
     private var stopNotificationCallbacks: Dictionary<String, [RCTResponseSenderBlock]>
+    private var bufferedCharacteristics: Dictionary<String, NotifyBufferContainer>
     
     private var connectedPeripherals: Set<String>
     
@@ -45,6 +46,7 @@ import CoreBluetooth
         writeQueue = []
         notificationCallbacks = [:]
         stopNotificationCallbacks = [:]
+        bufferedCharacteristics = [:]
         retrieveServicesLatches = [:]
         characteristicsLatches = [:]
         exactAdvertisingName = []
@@ -681,6 +683,32 @@ import CoreBluetooth
         
         peripheral.instance.setNotifyValue(true, for: characteristic)
     }
+
+    @objc public func startNotificationUseBuffer(_ peripheralUUID: String,
+                                                 serviceUUID: String,
+                                                 characteristicUUID: String,
+                                                 buffer: Int,
+                                                 callback: @escaping RCTResponseSenderBlock) {
+
+        NSLog("startNotificationUseBuffer")
+
+        guard let context = getContext(
+            peripheralUUID,
+            serviceUUIDString: serviceUUID,
+            characteristicUUIDString: characteristicUUID,
+            prop: CBCharacteristicProperties.notify,
+            callback: callback
+        ) else { return }
+        guard let peripheral = context.peripheral else { return }
+        guard let characteristic = context.characteristic else { return }
+
+        let key = Helper.key(forPeripheral: (peripheral.instance as CBPeripheral?)!, andCharacteristic: characteristic)
+        insertCallback(callback, intoDictionary: &notificationCallbacks, withKey: key)
+
+        self.bufferedCharacteristics[key] = NotifyBufferContainer(size: buffer)
+
+        peripheral.instance.setNotifyValue(true, for: characteristic)
+    }
     
     @objc public func stopNotification(_ peripheralUUID: String,
                                        serviceUUID: String,
@@ -1076,11 +1104,28 @@ import CoreBluetooth
             if readCallbacks[key] != nil {
                 invokeAndClearDictionary_THREAD_UNSAFE(&readCallbacks, withKey: key, usingParameters: [NSNull(), characteristic.value!.toArray()])
             } else {
+                var valueToEmit = characteristic.value!
+
+                if let bufferContainer = self.bufferedCharacteristics[key] {
+                    if BleManager.verboseLogging {
+                        NSLog("Add characteristic value to buffer: key: \(key), value to add: \(valueToEmit.hexadecimalString())")
+                    }
+                    bufferContainer.put(characteristic.value!)
+
+                    if !bufferContainer.isBufferFull { return }
+
+                    if BleManager.verboseLogging {
+                        NSLog("Buffer for key: \(key) is full")
+                    }
+                    valueToEmit = bufferContainer.items
+                    self.bufferedCharacteristics.removeValue(forKey: key)
+                }
+
                 self.bleManager?.emitOnDidUpdateValue(forCharacteristic: [
                     "peripheral": peripheral.uuidAsString(),
                     "characteristic": characteristic.uuid.uuidString.lowercased(),
                     "service": characteristic.service!.uuid.uuidString.lowercased(),
-                    "value": characteristic.value!.toArray()
+                    "value": valueToEmit.toArray()
                 ])
             }
         }
