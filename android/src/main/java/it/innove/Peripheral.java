@@ -101,7 +101,7 @@ public class Peripheral extends BluetoothGattCallback {
         }
     }
 
-    private void sendConnectionEvent(BluetoothDevice device, String eventName, int status) {
+    public void sendConnectionEvent(BluetoothDevice device, String eventName, int status) {
         WritableMap map = Arguments.createMap();
         map.putString("peripheral", device.getAddress());
         if (status != -1) {
