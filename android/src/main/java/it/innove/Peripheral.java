@@ -440,8 +440,8 @@ public class Peripheral extends BluetoothGattCallback {
         try {
             String charString = characteristic.getUuid().toString();
             String service = characteristic.getService().getUuid().toString();
-            NotifyBufferContainer buffer = this.bufferedCharacteristics
-                    .get(this.bufferedCharacteristicsKey(service, charString));
+            String bufferKey = this.bufferedCharacteristicsKey(service, charString);
+            NotifyBufferContainer buffer = this.bufferedCharacteristics.get(bufferKey);
             byte[] dataValue = data;
             // If for some reason the value's length >= 2*buffer size this will be able to
             // handle it
@@ -453,7 +453,7 @@ public class Peripheral extends BluetoothGattCallback {
 
                         // fetch and reset
                         dataValue = buffer.items.array();
-                        buffer.resetBuffer();
+                        this.bufferedCharacteristics.remove(bufferKey);
                     } else {
                         return;
                     }
