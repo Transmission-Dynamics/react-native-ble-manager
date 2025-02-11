@@ -105,7 +105,7 @@ public class Peripheral extends BluetoothGattCallback {
         Log.d(BleManager.LOG_TAG, "Peripheral connected:" + device.getAddress());
     }
 
-    private void sendDisconnectionEvent(BluetoothDevice device, int status) {
+    public void sendDisconnectionEvent(BluetoothDevice device, int status) {
         WritableMap map = Arguments.createMap();
         map.putString("peripheral", device.getAddress());
         if (status != -1) {
