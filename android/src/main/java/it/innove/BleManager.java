@@ -671,7 +671,7 @@ class BleManager extends ReactContextBaseJavaModule {
                         bondRequest.callback.invoke();
                         bondRequest = null;
                     } else if (bondState == BluetoothDevice.BOND_NONE || bondState == BluetoothDevice.ERROR) {
-                        bondRequest.callback.invoke("Bond request has been denied");
+                        bondRequest.callback.invoke("Pairing unsuccessful");
                         bondRequest = null;
                     }
                 }
