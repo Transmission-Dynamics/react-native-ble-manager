@@ -165,14 +165,17 @@ class BleManager extends ReactContextBaseJavaModule {
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_PAIRING_REQUEST);
         intentFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+        IntentFilter aclDisconnectIntentFilter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         if (Build.VERSION.SDK_INT >= 34){
             // Google in 2023 decides that flag RECEIVER_NOT_EXPORTED or RECEIVER_EXPORTED should be explicit set SDK 34(UPSIDE_DOWN_CAKE) on registering receivers.
             // Also the export flags are available on Android 8 and higher, should be used with caution so that don't break compability with that devices.
             context.registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
             context.registerReceiver(mReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+            context.registerReceiver(mReceiver, aclDisconnectIntentFilter, Context.RECEIVER_EXPORTED);
         } else {
             context.registerReceiver(mReceiver, filter);
             context.registerReceiver(mReceiver, intentFilter);
+            context.registerReceiver(mReceiver, aclDisconnectIntentFilter);
         }
 
         callback.invoke();
@@ -668,7 +671,7 @@ class BleManager extends ReactContextBaseJavaModule {
                         bondRequest.callback.invoke();
                         bondRequest = null;
                     } else if (bondState == BluetoothDevice.BOND_NONE || bondState == BluetoothDevice.ERROR) {
-                        bondRequest.callback.invoke("Bond request has been denied");
+                        bondRequest.callback.invoke("Pairing unsuccessful");
                         bondRequest = null;
                     }
                 }
@@ -700,8 +703,18 @@ class BleManager extends ReactContextBaseJavaModule {
                     bluetoothDevice.setPin(bondRequest.pin.getBytes());
                     bluetoothDevice.createBond();
                 }
+            } else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
+                BluetoothDevice bluetoothDevice;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice.class);
+                } else {
+                    bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                }
+                Peripheral peripheral = peripherals.get(bluetoothDevice.getAddress());
+                if (peripheral != null) {
+                    peripheral.sendConnectionEvent(bluetoothDevice, "BleManagerDisconnectPeripheral", -1);
+                }
             }
-
         }
     };
 
