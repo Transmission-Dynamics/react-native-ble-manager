@@ -3,7 +3,7 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name		= "react-native-ble-manager"
+  s.name		= "transmission-dynamics-react-native-ble-manager"
   s.summary		= "A BLE module for react native."
   s.version		= package['version']
   s.authors		= { "Innove" => "https://github.com/innoveit" }
