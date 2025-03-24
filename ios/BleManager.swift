@@ -372,6 +372,16 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
         }
     }
     
+    @objc func cancelPeripheralConnection(_ peripheralUUID: String,
+                                          callback: @escaping RCTResponseSenderBlock) {
+        if let peripheral = peripherals[peripheralUUID] {
+            NSLog("Canceling active or pending connection to peripheral with UUID: \(peripheralUUID)")
+
+            manager?.cancelPeripheralConnection(peripheral.instance)
+            callback([])
+        }
+    }
+    
     @objc func retrieveServices(_ peripheralUUID: String,
                                 services: [String],
                                 callback: @escaping RCTResponseSenderBlock) {
