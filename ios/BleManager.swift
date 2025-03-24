@@ -138,6 +138,12 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
         }
     }
     
+    func clearBufferedCharacteristics(forPeripheral peripheral: CBPeripheral, andCharacteristic characteristic: CBCharacteristic) {
+        let key = Helper.key(forPeripheral: peripheral, andCharacteristic: characteristic)
+
+        self.bufferedCharacteristics.removeValue(forKey: key)
+    }
+    
     @objc func getContext(_ peripheralUUIDString: String, serviceUUIDString: String, characteristicUUIDString: String, prop: CBCharacteristicProperties, callback: @escaping RCTResponseSenderBlock) -> BLECommandContext? {
         let serviceUUID = CBUUID(string: serviceUUIDString)
         let characteristicUUID = CBUUID(string: characteristicUUIDString)
@@ -690,7 +696,10 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
         
         let key = Helper.key(forPeripheral: (peripheral.instance as CBPeripheral?)!, andCharacteristic: characteristic)
         insertCallback(callback, intoDictionary: &notificationCallbacks, withKey: key)
-        
+
+        // NOTE: Just to be sure that we do not have any incomplete notification buffers
+        self.bufferedCharacteristics.removeValue(forKey: key)
+
         peripheral.instance.setNotifyValue(true, for: characteristic)
     }
 
@@ -1000,6 +1009,8 @@ class BleManager: RCTEventEmitter, CBCentralManagerDelegate, CBPeripheralDelegat
         
         if let characteristics = service.characteristics {
             for characteristic in characteristics {
+                self.clearBufferedCharacteristics(forPeripheral: peripheral, andCharacteristic: characteristic)
+
                 peripheral.discoverDescriptors(for: characteristic)
             }
         }
