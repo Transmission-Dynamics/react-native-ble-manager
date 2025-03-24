@@ -262,6 +262,23 @@ class BleManager extends NativeEventEmitter {
   }
 
   /**
+   * [iOS only]
+   * @param peripheralId
+   * @returns
+   */
+  cancelPeripheralConnection(peripheralId: string) {
+    return new Promise<void>((fulfill, reject) => {
+      bleManager.cancelPeripheralConnection(peripheralId, (error: string | null) => {
+        if (error) {
+          reject(error);
+        } else {
+          fulfill();
+        }
+      });
+    });
+  }
+
+  /**
    * [Android only]
    * @param peripheralId
    * @param peripheralPin optional. will be used to auto-bond if possible.

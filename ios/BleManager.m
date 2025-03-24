@@ -27,6 +27,10 @@ RCT_EXTERN_METHOD(disconnect:
                   force:(BOOL)force
                   callback:(nonnull RCTResponseSenderBlock)callback)
 
+RCT_EXTERN_METHOD(cancelPeripheralConnection:
+                  (NSString *)peripheralUUID 
+                  callback:(nonnull RCTResponseSenderBlock)callback)
+
 RCT_EXTERN_METHOD(retrieveServices:
                   (NSString *)peripheralUUID
                   services:(NSArray<NSString *> *)services
