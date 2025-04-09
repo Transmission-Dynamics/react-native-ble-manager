@@ -38,7 +38,7 @@ public class DefaultScanManager extends ScanManager {
 
     private boolean isScanning = false;
 
-    private boolean enforceFirstMatch = true;
+    private boolean enforceFirstMatch = false;
     private final HashSet<String> discoveredUuids = new HashSet<String>();
 
     public DefaultScanManager(ReactApplicationContext reactContext, BleManager bleManager) {
