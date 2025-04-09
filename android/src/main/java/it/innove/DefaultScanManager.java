@@ -31,11 +31,15 @@ import com.facebook.react.bridge.WritableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashSet;
 
 @SuppressLint("MissingPermission")
 public class DefaultScanManager extends ScanManager {
 
     private boolean isScanning = false;
+
+    private boolean enforceFirstMatch = true;
+    private final HashSet<String> discoveredUuids = new HashSet<String>();
 
     public DefaultScanManager(ReactApplicationContext reactContext, BleManager bleManager) {
         super(reactContext, bleManager);
@@ -51,6 +55,13 @@ public class DefaultScanManager extends ScanManager {
         if (scanner != null)
             scanner.stopScan(mScanCallback);
         isScanning = false;
+
+        // CLEANUP:
+        // Reset the enforceFirstMatch flag to false
+        this.enforceFirstMatch = false;
+        // Clear the discovered UUIDs after stopping the scan
+        this.discoveredUuids.clear();
+
         callback.invoke();
     }
 
@@ -58,6 +69,9 @@ public class DefaultScanManager extends ScanManager {
     public void scan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
         ScanSettings.Builder scanSettingsBuilder = new ScanSettings.Builder();
         List<ScanFilter> filters = new ArrayList<>();
+
+        // Clear the discovered UUIDs before each scan (just to be sure)
+        this.discoveredUuids.clear();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && options.hasKey("legacy")) {
             scanSettingsBuilder.setLegacy(options.getBoolean("legacy"));
@@ -76,6 +90,13 @@ public class DefaultScanManager extends ScanManager {
             }
             if (options.hasKey("callbackType")) {
                 scanSettingsBuilder.setCallbackType(options.getInt("callbackType"));
+            }
+        }
+
+        if (options.hasKey("enforceFirstMatch")) {
+            this.enforceFirstMatch = options.getBoolean("enforceFirstMatch");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                scanSettingsBuilder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES);
             }
         }
 
@@ -220,8 +241,21 @@ public class DefaultScanManager extends ScanManager {
         }
         bleManager.savePeripheral(peripheral);
 
+        if (this.enforceFirstMatch) {
+            // Skip sending event if the peripheral was already discovered
+            // This is to avoid sending the same peripheral multiple times over the bridge
+            // since using `callbackType = BleScanCallbackType.FirstMatch` not always works as expected
+            if (this.discoveredUuids.contains(result.getDevice().getAddress())) {
+                Log.i(BleManager.LOG_TAG, "Peripheral: " + info + " already discovered - skipping sending event");
+                return;
+            }
+        }
+
         WritableMap map = peripheral.asWritableMap();
         bleManager.emitOnDiscoverPeripheral(map);
+
+        // Add the UUID to the discovered list
+        this.discoveredUuids.add(result.getDevice().getAddress());
     }
 
     private final ScanCallback mScanCallback = new ScanCallback() {
