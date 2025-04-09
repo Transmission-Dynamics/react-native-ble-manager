@@ -158,6 +158,20 @@ export interface ScanOptions {
    */
   single?: boolean;
   companion?: boolean;
+
+  /**
+   * [android only]
+   * Enforce the same behaviour as the `callbackType = FirstMatch`
+   * but on the native `onDiscoveredPeripheral` callback level.
+   * This is a workaround for the fact that a few devices
+   * are not able to handle `callbackType = FirstMatch` properly.
+   * 
+   * **IMPORTANT**: Setting this flag to `true` will automatically
+   * override the `callbackType` to `AllMatches`.
+   * 
+   * Defaults to `false`.
+   * */
+  enforceFirstMatch?: boolean;
 }
 
 export interface CompanionScanOptions {
