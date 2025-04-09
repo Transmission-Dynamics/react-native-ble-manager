@@ -491,6 +491,21 @@ class BleManager extends NativeEventEmitter {
         }
       }
 
+      // (ANDROID)
+      // Enforce the same behaviour as the `callbackType = FirstMatch`
+      // but on the native `onDiscoveredPeripheral` callback level.
+      // This is a workaround for the fact that a few devices
+      // are not able to handle `callbackType = FirstMatch` properly.
+      // **IMPORTANT**: Setting this flag to `true` will automatically
+      // override the `callbackType` to `AllMatches`.
+      // Defaults to `false`.
+      if (scanningOptions.enforceFirstMatch == null) {
+        scanningOptions.enforceFirstMatch = false;
+      }
+      if (scanningOptions.enforceFirstMatch) {
+        scanningOptions.callbackType = BleScanCallbackType.AllMatches;
+      }
+
       bleManager.scan(
         serviceUUIDs,
         seconds,
