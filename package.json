@@ -1,6 +1,6 @@
 {
-    "name": "react-native-ble-manager",
-    "version": "12.1.5",
+    "name": "@transmission-dynamics/react-native-ble-manager",
+    "version": "12.1.5-td.1.0.0",
     "description": "A BLE module for react native.",
     "homepage": "https://innoveit.github.io/react-native-ble-manager/",
     "repository": {
