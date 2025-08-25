@@ -671,45 +671,12 @@ import CoreBluetooth
         peripheral?.instance.readValue(for: characteristic!)  // callback sends value
     }
     
-    
-    
     @objc public func startNotificationWithBuffer(_ peripheralUUID: String,
                                                   serviceUUID: String,
                                                   characteristicUUID: String,
                                                   bufferLength: NSNumber,
                                                   callback: @escaping RCTResponseSenderBlock) {
-        callback(["Not supported"])
-    }
-    
-    @objc public func startNotification(_ peripheralUUID: String,
-                                        serviceUUID: String,
-                                        characteristicUUID: String,
-                                        callback: @escaping RCTResponseSenderBlock) {
-        NSLog("startNotification")
-        
-        guard let context = getContext(peripheralUUID, serviceUUIDString: serviceUUID, characteristicUUIDString: characteristicUUID, prop: CBCharacteristicProperties.notify, callback: callback) else {
-            return
-        }
-        
-        guard let peripheral = context.peripheral else { return }
-        guard let characteristic = context.characteristic else { return }
-        
-        let key = Helper.key(forPeripheral: (peripheral.instance as CBPeripheral?)!, andCharacteristic: characteristic)
-        insertCallback(callback, intoDictionary: &notificationCallbacks, withKey: key)
-
-        // NOTE: Just to be sure that we do not have any incomplete notification buffers
-        self.bufferedCharacteristics.removeValue(forKey: key)
-
-        peripheral.instance.setNotifyValue(true, for: characteristic)
-    }
-
-    @objc public func startNotificationUseBuffer(_ peripheralUUID: String,
-                                                 serviceUUID: String,
-                                                 characteristicUUID: String,
-                                                 buffer: Int,
-                                                 callback: @escaping RCTResponseSenderBlock) {
-
-        NSLog("startNotificationUseBuffer")
+        NSLog("startNotificationWithBuffer")
 
         guard let context = getContext(
             peripheralUUID,
@@ -724,11 +691,33 @@ import CoreBluetooth
         let key = Helper.key(forPeripheral: (peripheral.instance as CBPeripheral?)!, andCharacteristic: characteristic)
         insertCallback(callback, intoDictionary: &notificationCallbacks, withKey: key)
 
-        self.bufferedCharacteristics[key] = NotifyBufferContainer(size: buffer)
+        self.bufferedCharacteristics[key] = NotifyBufferContainer(size: bufferLength.intValue)
 
         peripheral.instance.setNotifyValue(true, for: characteristic)
     }
-    
+
+    @objc public func startNotification(_ peripheralUUID: String,
+                                        serviceUUID: String,
+                                        characteristicUUID: String,
+                                        callback: @escaping RCTResponseSenderBlock) {
+        NSLog("startNotification")
+
+        guard let context = getContext(peripheralUUID, serviceUUIDString: serviceUUID, characteristicUUIDString: characteristicUUID, prop: CBCharacteristicProperties.notify, callback: callback) else {
+            return
+        }
+
+        guard let peripheral = context.peripheral else { return }
+        guard let characteristic = context.characteristic else { return }
+
+        let key = Helper.key(forPeripheral: (peripheral.instance as CBPeripheral?)!, andCharacteristic: characteristic)
+        insertCallback(callback, intoDictionary: &notificationCallbacks, withKey: key)
+
+        // NOTE: Just to be sure that we do not have any incomplete notification buffers
+        self.bufferedCharacteristics.removeValue(forKey: key)
+
+        peripheral.instance.setNotifyValue(true, for: characteristic)
+    }
+
     @objc public func stopNotification(_ peripheralUUID: String,
                                        serviceUUID: String,
                                        characteristicUUID: String,
