@@ -1117,14 +1117,14 @@ import CoreBluetooth
                 var valueToEmit = characteristic.value!
 
                 if let bufferContainer = self.bufferedCharacteristics[key] {
-                    if BleManager.verboseLogging {
+                    if SwiftBleManager.verboseLogging {
                         NSLog("Add characteristic value to buffer: key: \(key), value to add: \(valueToEmit.hexadecimalString())")
                     }
                     bufferContainer.put(characteristic.value!)
 
                     if !bufferContainer.isBufferFull { return }
 
-                    if BleManager.verboseLogging {
+                    if SwiftBleManager.verboseLogging {
                         NSLog("Buffer for key: \(key) is full")
                     }
                     valueToEmit = bufferContainer.items
